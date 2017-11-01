@@ -5,14 +5,11 @@ require 'fileutils'
 # This script will determine which tarballs are the latest on the forge,
 # and download them to a directory.
 #
-# Before running this, run
-#   s3cmd ls s3://forgenext-modules-prod > list.txt
-# then run
-#   mkdir tarballs
-#   latest tarballs/ list.txt | bash
-#
-# The script will sync the directory, i.e., remove old tarballs and
-# download new ones if you feed it with a newer list.txt.
+# The script does everything in ../data. It first downloads, if it does not
+# exist, ../data/list.txt. It uses that file to determine which tarballs in
+# ../data/tarballs/ are outdated, those are removed, and which ones are
+# missing and downloads them. It tries its best to only ever download one
+# version of a module.
 
 TOP_DIR=File::expand_path(File::dirname($0) + "/..")
 DATA=File::join(TOP_DIR, "data")
