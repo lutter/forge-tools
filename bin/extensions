@@ -1,0 +1,14 @@
+#! /bin/bash
+
+# Print out all the stuff that people put immediately into lib/puppet/*
+topdir=$(readlink -f $(dirname $0)/..)
+code=$topdir/data/code
+
+cd $code
+
+echo "** Toplevel module directories"
+find . -mindepth 2 -maxdepth 2 -type d -printf "%f\n" | sort -u
+
+echo
+echo "** Directories in lib/puppet"
+find */lib/puppet -mindepth 1 -maxdepth 1 -type d -printf "%f\n" | sort -u

@@ -1,0 +1,25 @@
+#! /bin/bash
+
+topdir=$(readlink -f $(dirname $0)/..)
+data=$topdir/data
+
+cd $data
+
+for kind in type provider parser facter functions
+do
+    echo "Link $kind"
+    rm -rf $kind
+    mkdir -p $kind
+    cd $kind
+    for dir in ../code/*/lib/puppet/$kind
+    do
+        if [ -n "$(ls -A $dir)" ]
+        then
+            # there's something in $dir
+            tb=$(readlink -f $dir/../../..)
+            ln -s $dir $(basename $tb)
+        fi
+    done
+    cd ..
+    find $kind -follow -type d -empty
+done

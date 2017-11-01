@@ -1,0 +1,14 @@
+#! /bin/bash
+
+# Unpack the tarballs from data/tarballs
+
+topdir=$(readlink -f $(dirname $0)/..)
+code=$topdir/data/code
+
+mkdir -p $code
+cd $code
+for t in ../tarballs/*.tar.gz
+do
+    echo Unpack $(basename $t)
+    tar xzf $t
+done

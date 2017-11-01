@@ -1,0 +1,94 @@
+#! /usr/bin/env ruby
+
+require 'fileutils'
+
+# This script will determine which tarballs are the latest on the forge,
+# and download them to a directory.
+#
+# Before running this, run
+#   s3cmd ls s3://forgenext-modules-prod > list.txt
+# then run
+#   mkdir tarballs
+#   latest tarballs/ list.txt | bash
+#
+# The script will sync the directory, i.e., remove old tarballs and
+# download new ones if you feed it with a newer list.txt.
+
+TOP_DIR=File::expand_path(File::dirname($0) + "/..")
+DATA=File::join(TOP_DIR, "data")
+LIST_FILE=File::join(DATA, "list.txt")
+TARBALLS_DIR=File::join(DATA, "tarballs")
+
+BUCKET="s3://forgenext-modules-prod"
+
+# Turn a version string like "1.2.3-4" into an array of integers [1,2,3,4]
+def to_array(version)
+  version.split(/[.-]/).map do |x|
+    if x =~ /\A.*([0-9]+).*\Z/
+      $1.to_i
+    else
+      0
+    end
+  end
+end
+
+def vercmp(a, b)
+  # Poor man's version comparison
+  to_array(a) <=> to_array(b)
+end
+
+# This horror is used to split the name of a tarball into a name and a
+# version string. It ignores an initial prefix of numbers followed by an
+# underscore. Version strings can be any of the following:
+#   1.2.3
+#   1.2.3-4
+#   1.2.3-rc3
+#   1.2.3-pre5
+#   1.2.3-SNAPSHOT
+# There's still a few tarballs that this doesn't catch, but it seems good enough
+TAR_RX = /\A(?:[0-9]*_)?(.*?)-([0-9.-]+((rc|pre)[0-9]+|SNAPSHOT|(alpha|beta|dev)[0-9]?)?).tar.gz\Z/
+
+FileUtils::mkdir_p(DATA)
+FileUtils::mkdir_p(TARBALLS_DIR)
+
+unless File::exist?(LIST_FILE)
+  puts "Downloading list from #{BUCKET}"
+  system("s3cmd ls #{BUCKET} > #{LIST_FILE}")
+else
+  puts "Found #{LIST_FILE}. Remove it to force a refresh"
+end
+
+pkgs = {}
+orig = {}
+File::open(LIST_FILE, "r") do |fp|
+    fp.each_line do |l|
+    next if l =~ /DIR/
+    tarball = File::basename(l.split[3])
+    if tarball =~ TAR_RX
+      pkgs[$1] ||= []
+      pkgs[$1] << $2
+      orig[$1] ||= {}
+      orig[$1][$2] = tarball
+    end
+  end
+end
+
+pkgs.keys.each do |name|
+  latest = pkgs[name].sort { |a,b| vercmp(a,b) }.last
+  pkgs[name].each do |ver|
+    tarball = orig[name][ver]
+    fname = File::join(TARBALLS_DIR, tarball)
+    s3name = "#{BUCKET}/#{tarball}"
+    if ver == latest
+      if ! File.exist?(fname)
+        puts "Get #{tarball}"
+        system("s3cmd -q get #{s3name} #{fname}")
+      end
+    else
+      if File.exist?(fname)
+        puts "Remove #{fname}"
+        system("rm #{fname}")
+      end
+    end
+  end
+end
