@@ -8,6 +8,9 @@ Change your `PATH` to include the `bin` directory from this repo.
 
 To get started, run `latest`. This will create a directory `data/tarballs`
 containing the latest version of each Forge tarball. Then run `unpack`
-which will unpack them in `data/code`. Finally, run `link` which will
-create additional directories like `provider` and `type` linking to
-subdirectories of individual modules that contain such data.
+which will unpack them in `data/code`. Run `clean` to remove empty
+directories and other annoying stuff.
+
+Finally, run `link` which will create additional directories in `links/`
+like `provider` and `type` linking to subdirectories of individual modules
+that contain such data.

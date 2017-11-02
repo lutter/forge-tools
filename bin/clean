@@ -1,0 +1,11 @@
+#! /bin/bash
+
+topdir=$(readlink -f $(dirname $0)/..)
+code=$topdir/data/code
+
+cd $code
+
+# Clean some annoying stuff from the code
+find . -name .gitignore -type f | xargs -r rm
+
+find . -type d -empty | xargs -r rmdir --ignore-fail-on-non-empty -p
