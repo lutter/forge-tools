@@ -4,14 +4,16 @@ topdir=$(readlink -f $(dirname $0)/..)
 data=$topdir/data
 
 cd $data
+rm -rf links
+mkdir links
+cd links
 
 for kind in type provider parser facter functions
 do
     echo "Link $kind"
-    rm -rf $kind
     mkdir -p $kind
     cd $kind
-    for dir in ../code/*/lib/puppet/$kind
+    for dir in ../../code/*/lib/puppet/$kind
     do
         if [ -n "$(ls -A $dir)" ]
         then
@@ -21,5 +23,4 @@ do
         fi
     done
     cd ..
-    find $kind -follow -type d -empty
 done
