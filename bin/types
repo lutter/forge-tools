@@ -1,0 +1,51 @@
+#! /usr/bin/env ruby
+
+require 'optparse'
+
+TOP_DIR=File::expand_path(File::dirname($0) + "/..")
+DATA=File::join(TOP_DIR, "data")
+CODE=File::join(DATA, "code")
+
+options = {}
+OptionParser.new do |opts|
+  opts.banner = "Print information about types"
+  opts.on("-m", "--multiple",
+          "Only print types defined in multiple modules") do |v|
+    options[:multiple] = true
+  end
+  opts.on("-c", "--count",
+          "Print a count of all types") { |v| options[:count] = true }
+  opts.on("-h", "--help", "Prints this help") do
+    puts opts
+    exit
+  end
+end.parse!
+
+types = {}
+Dir.glob("#{CODE}/*/lib/puppet/type/*.rb").each do |f|
+  name=File::basename(f, ".rb")
+  mod=File::basename(File::expand_path(File::dirname(f) + "../../../.."))
+  types[name] ||= []
+  types[name] << mod
+end
+
+if options[:count]
+  total = 0
+  multiple = 0
+  types.keys.each do |name|
+    total += 1
+    multiple += 1 if types[name].size > 1
+  end
+  puts "#{total} types, #{multiple} with multiple definitions"
+else
+  types.keys.sort.each do |name|
+    if types[name].size == 1
+      printf "%-20s %s\n", name, types[name][0] unless options[:multiple]
+    else
+      printf "%-20s\n", name
+      types[name].each do |mod|
+        printf "    %s\n", mod
+      end
+    end
+  end
+end
