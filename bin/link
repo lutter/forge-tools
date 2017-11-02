@@ -18,9 +18,25 @@ do
         if [ -n "$(ls -A $dir)" ]
         then
             # there's something in $dir
-            tb=$(readlink -f $dir/../../..)
-            ln -s $dir $(basename $tb)
+            tb=$(basename $(readlink -f $dir/../../..))
+            ln -s $dir $tb
         fi
     done
+    # Look through lib/facter for facts
+    if [[ $kind = facter ]]
+    then
+        for dir in ../../code/*/lib/facter
+        do
+            if [ -n "$(ls -A $dir)" ]
+            then
+                # there's something in $dir
+                tb=$(basename $(readlink -f $dir/../..))
+                if [ -e "$tb" ]; then
+                    tb="$tb_facter"
+                fi
+                ln -s $dir $tb
+            fi
+        done
+    fi
     cd ..
 done
